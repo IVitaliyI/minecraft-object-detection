@@ -18,7 +18,7 @@ else
     --system-certs --no-build-isolation
 fi
 
-echo "=== 3. Установка локального mmdetection в editable-режиме ==="
-uv --system-certs pip install -e ./mmdetection --no-build-isolation
+echo "=== 3. Установка локального mmdetection ==="
+uv --system-certs pip install ./mmdetection --no-build-isolation
 
 echo "🎉 Окружение успешно настроено!"
