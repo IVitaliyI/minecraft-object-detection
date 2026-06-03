@@ -34,33 +34,19 @@ git submodule update --init --recursive
 ### CPU Environment
 
 ```bash
-uv sync --extra cpu
+./install.sh cpu
 ```
 
 ### CUDA Environment
 
 ```bash
-uv sync --extra gpu
+./install.sh gpu
 ```
 
 Verify installation:
 
 ```bash
 uv run python -c "import torch; print(torch.__version__); print(torch.cuda.is_available())"
-```
-
-Expected output:
-
-CPU:
-
-```text
-False
-```
-
-GPU:
-
-```text
-True
 ```
 
 ## Dataset Preparation
@@ -75,38 +61,6 @@ datasets/
     ├── annotations/
     │   ├── instances_train.json
     │   └── instances_val.json
-```
-
-## Training
-
-Run training using MMDetection tools:
-
-```bash
-uv run python mmdetection/tools/train.py configs/minecraft/faster_rcnn.py
-```
-
-Save outputs to:
-
-```text
-work_dirs/
-```
-
-or configure a custom experiment directory in the config.
-
-## Evaluation
-
-```bash
-uv run python mmdetection/tools/test.py \
-    configs/minecraft/faster_rcnn.py \
-    work_dirs/faster_rcnn/latest.pth
-```
-
-## Inference
-
-```bash
-uv run python demo/inference.py \
-    --checkpoint work_dirs/faster_rcnn/latest.pth \
-    --image example.png
 ```
 
 ## Updating MMDetection
