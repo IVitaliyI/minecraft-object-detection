@@ -8,7 +8,6 @@ Object detection project for Minecraft screenshots and gameplay footage based on
 .
 ├── configs/               # Training and model configs
 ├── datasets/              # Dataset files (not tracked by git)
-├── experiments/           # Training outputs
 ├── src/                   # Project source code
 ├── mmdetection/           # MMDetection git submodule
 ├── pyproject.toml
