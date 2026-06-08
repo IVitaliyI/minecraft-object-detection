@@ -115,7 +115,7 @@ optim_wrapper = dict(  # Optimizer wrapper config
     type="OptimWrapper",  # Optimizer wrapper type, switch to AmpOptimWrapper to enable mixed precision training.
     optimizer=dict(  # Optimizer config. Support all kinds of optimizers in PyTorch. Refer to https://pytorch.org/docs/stable/optim.html#algorithms
         type="SGD",  # Stochastic gradient descent optimizer
-        lr=0.02,  # The base learning rate
+        lr=0.0025,  # The base learning rate
         momentum=0.9,  # Stochastic gradient descent with momentum
         weight_decay=0.0001,
     ),  # Weight decay of SGD
@@ -147,10 +147,17 @@ default_hooks = dict(
     param_scheduler=dict(type="ParamSchedulerHook"),
     checkpoint=dict(type="CheckpointHook", interval=1),
     sampler_seed=dict(type="DistSamplerSeedHook"),
-    visualization=dict(type="DetVisualizationHook"),
+    visualization=dict(type="DetVisualizationHook", draw=True, interval=1, show=True),
 )
 
 default_scope = "mmdet"  # The default registry scope to find modules. Refer to https://mmengine.readthedocs.io/en/latest/advanced_tutorials/registry.html
+
+vis_backends = [
+    dict(type="LocalVisBackend")
+]  # Visualization backends. Refer to https://mmengine.readthedocs.io/en/latest/advanced_tutorials/visualization.html
+visualizer = dict(
+    type="DetLocalVisualizer", vis_backends=vis_backends, name="visualizer"
+)
 
 env_cfg = dict(
     cudnn_benchmark=False,  # Whether to enable cudnn benchmark
@@ -161,12 +168,6 @@ env_cfg = dict(
     dist_cfg=dict(backend="nccl"),  # Distribution configs
 )
 
-vis_backends = [
-    dict(type="LocalVisBackend")
-]  # Visualization backends. Refer to https://mmengine.readthedocs.io/en/latest/advanced_tutorials/visualization.html
-visualizer = dict(
-    type="DetLocalVisualizer", vis_backends=vis_backends, name="visualizer"
-)
 log_processor = dict(
     type="LogProcessor",  # Log processor to process runtime logs
     window_size=50,  # Smooth interval of log values
