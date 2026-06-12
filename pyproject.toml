@@ -13,6 +13,7 @@ dependencies = [
   "pydantic>=2.13.4",
   "seaborn>=0.13.2",
   "ultralytics>=8.4.62",
+  "reportlab>=4.5.1",
 ]
 
 [project.optional-dependencies]
