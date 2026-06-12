@@ -4,7 +4,15 @@ _base_ = [
 
 from src.constants import MINECRAFT_CLASS_COLORS_RGB
 
-model = dict(bbox_head=dict(num_classes=len(MINECRAFT_CLASS_COLORS_RGB.keys())))
+
+
+model = dict(
+    backbone=dict(
+        frozen_stages=1,
+        norm_eval=True,
+    ),
+    bbox_head=dict(num_classes=len(MINECRAFT_CLASS_COLORS_RGB.keys())),
+)
 
 
 dataset_type = "CocoDataset"
@@ -18,7 +26,23 @@ backend_args = None
 train_pipeline = [
     dict(type="LoadImageFromFile", backend_args=backend_args),
     dict(type="LoadAnnotations", with_bbox=True, poly2mask=False),
-    dict(type="Resize", scale=(512, 512), keep_ratio=True),
+    dict(
+        type="RandomAffine",
+        max_rotate_degree=30.0,
+        max_translate_ratio=0.15,
+        scaling_ratio_range=(1.0, 1.0), 
+        border_val=(114, 114, 114),
+    ),
+    dict(
+        type="RandomResize",
+        scale=[(640, 640), (896, 896)],
+        keep_ratio=True,
+    ),
+    dict(
+        type="RandomCrop",
+        crop_size=(640, 640),
+        allow_negative_crop=False, 
+    ),
     dict(type="RandomFlip", prob=0.5),
     dict(type="PackDetInputs"),
 ]
@@ -31,8 +55,8 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=8,
-    num_workers=2,
+    batch_size=16,
+    num_workers=4,
     persistent_workers=True,
     sampler=dict(type="DefaultSampler", shuffle=True),
     dataset=dict(
@@ -47,11 +71,11 @@ train_dataloader = dict(
 )
 
 val_dataloader = dict(
-    batch_size=1,
-    num_workers=2,
+    batch_size=8,
+    num_workers=4,
     persistent_workers=True,
     drop_last=False,
-    sampler=dict(type="DefaultSampler", shuffle=True),
+    sampler=dict(type="DefaultSampler", shuffle=False),
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
@@ -64,8 +88,8 @@ val_dataloader = dict(
 )
 
 test_dataloader = dict(
-    batch_size=1,
-    num_workers=2,
+    batch_size=16,
+    num_workers=4,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type="DefaultSampler", shuffle=False),
@@ -105,7 +129,7 @@ test_evaluator = dict(
 
 train_cfg = dict(
     type="EpochBasedTrainLoop",  # The training loop type. Refer to https://github.com/open-mmlab/mmengine/blob/main/mmengine/runner/loops.py
-    max_epochs=12,  # Maximum training epochs
+    max_epochs=50,  # Maximum training epochs
     val_interval=1,
 )
 val_cfg = dict(type="ValLoop")  # The validation loop type
@@ -122,41 +146,42 @@ optim_wrapper = dict(  # Optimizer wrapper config
     clip_grad=None,  # Gradient clip option. Set None to disable gradient clip. Find usage in https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html
 )
 
-param_scheduler = [
-    # Linear learning rate warm-up scheduler
-    dict(
-        type="LinearLR",  # Use linear policy to warmup learning rate
-        start_factor=0.001,  # The ratio of the starting learning rate used for warmup
-        by_epoch=False,  # The warmup learning rate is updated by iteration
-        begin=0,  # Start from the first iteration
-        end=500,
-    ),  # End the warmup at the 500th iteration
-    # The main LRScheduler
-    dict(
-        type="MultiStepLR",  # Use multi-step learning rate policy during training
-        by_epoch=True,  # The learning rate is updated by epoch
-        begin=0,  # Start from the first epoch
-        end=12,  # End at the 12th epoch
-        milestones=[8, 11],  # Epochs to decay the learning rate
-        gamma=0.1,
-    ),  # The learning rate decay ratio
-]
+param_scheduler = [dict(
+    type="CosineAnnealingLR",
+    T_max=50,
+    eta_min=1e-5,
+)]
 
 default_hooks = dict(
     timer=dict(type="IterTimerHook"),
+    logger=dict(type="LoggerHook", interval=50),
     param_scheduler=dict(type="ParamSchedulerHook"),
-    checkpoint=dict(type="CheckpointHook", interval=1),
+    checkpoint=dict(
+        type="CheckpointHook",
+        interval=1,
+        save_best="coco/bbox_mAP",
+        rule="greater",
+        max_keep_ckpts=3,
+    ),
     sampler_seed=dict(type="DistSamplerSeedHook"),
-    visualization=dict(type="DetVisualizationHook", draw=True, interval=1, show=True),
+    visualization=dict(
+        type="DetVisualizationHook",
+        draw=True,
+        interval=50,
+        show=False,
+    ),
 )
 
 default_scope = "mmdet"  # The default registry scope to find modules. Refer to https://mmengine.readthedocs.io/en/latest/advanced_tutorials/registry.html
 
 vis_backends = [
-    dict(type="LocalVisBackend")
-]  # Visualization backends. Refer to https://mmengine.readthedocs.io/en/latest/advanced_tutorials/visualization.html
+    dict(type="LocalVisBackend"),
+]
+
 visualizer = dict(
-    type="DetLocalVisualizer", vis_backends=vis_backends, name="visualizer"
+    type="DetLocalVisualizer",
+    vis_backends=vis_backends,
+    name="visualizer",
 )
 
 env_cfg = dict(
